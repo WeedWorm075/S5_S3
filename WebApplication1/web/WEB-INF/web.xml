@@ -4,6 +4,62 @@
         <servlet-name>MyServlet</servlet-name>
         <servlet-class>servlet.MyServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>RedirectServlet</servlet-name>
+        <servlet-class>controlleur.RedirectServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetAllServlet</servlet-name>
+        <servlet-class>controlleur.GetAllServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GetCondServlet</servlet-name>
+        <servlet-class>controlleur.GetCondServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ActiviteServlet</servlet-name>
+        <servlet-class>controlleur.ActiviteServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ActiviteServlet</servlet-name>
+        <url-pattern>/ActiviteServlet</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>BouquetServlet</servlet-name>
+        <servlet-class>controlleur.BouquetServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BouquetServlet</servlet-name>
+        <url-pattern>/BouquetServlet</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>CategorieLieuServlet</servlet-name>
+        <servlet-class>controlleur.CategorieLieuServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CategorieLieuServlet</servlet-name>
+        <url-pattern>/CategorieLieuServlet</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>LieuServlet</servlet-name>
+        <servlet-class>controlleur.LieuServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LieuServlet</servlet-name>
+        <url-pattern>/LieuServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RedirectServlet</servlet-name>
+        <url-pattern>/RedirectServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetAllServlet</servlet-name>
+        <url-pattern>/GetAllServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GetCondServlet</servlet-name>
+        <url-pattern>/GetCondServlet</url-pattern>
+    </servlet-mapping>
     <servlet-mapping>
         <servlet-name>MyServlet</servlet-name>
         <url-pattern>/MyServlet</url-pattern>

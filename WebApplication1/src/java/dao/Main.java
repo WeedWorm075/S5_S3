@@ -1,18 +1,18 @@
-package main;
+package dao;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.util.List;
 
-import connexion.*;
-import model.Client;
+import dao.*;
 
 public class Main {
     public static void main(String[] args) {
 
-        Client ca = new Client();
-
+        Test ca = new Test();
+        Test cf =new Test(1, "gg", "dd");
+        
+        Test cd =new Test(1, "pp", "dd");
+        
         Connexion_projet c = new Connexion_projet();
         Connection co = null;
         try {
@@ -24,11 +24,14 @@ public class Main {
         }
         finally{
             try {
-                List<Client> l = ca.allClient(co);
-                for (Client cc : l) {
+                System.out.println(cf.generateUpdateQuery(cd));
+                int nb = cf.executeDeleteQuery(co);
+                System.out.println("hihi "+nb);
+                List<Test> l = ca.allTest(co);
+                for (Test cc : l) {
                     System.out.println(cc.getNom());
                 }
-                System.out.println();
+                cf.delete(co);
                 co.close();
             } catch (Exception e) {
                 // TODO: handle exception

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package connexion;
+package dao;
 
 /**
  *
@@ -19,7 +19,7 @@ public class Connexion_projet extends Connexion{
         setBase("postgresql");
         setUser("postgres");
         setPassword("root");
-        setDatabase("test");
+        setDatabase("voyage");
     }
     
     

@@ -7,15 +7,18 @@ package dao;
 
 import annotation.Column;
 import annotation.Table;
-import connexion.Connexion;
+import dao.Connexion;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +39,254 @@ public class Generic2 implements Serializable{
         Table table = this.getClass().getAnnotation(Table.class);
         Connexion connexion = new Connexion(table.base(), table.user(), table.password(), table.database());
         return connexion.getconnection();
-    } 
+    }
+    
+
+
+    public String generateUpdateQueryTest() {
+        Class<?> clazz = this.getClass();
+        StringBuilder queryBuilder = new StringBuilder();
+
+        try {
+            // Récupérer le nom de la table depuis l'annotation @Table
+            if (clazz.isAnnotationPresent(Table.class)) {
+                Table tableAnnotation = clazz.getAnnotation(Table.class);
+                queryBuilder.append("UPDATE ").append(tableAnnotation.libelle()).append(" SET ");
+            }
+
+            // Récupérer les colonnes et valeurs depuis les annotations @Column
+            List<String> columnValuePairs = new ArrayList<>();
+            String primaryKeyColumn = "";
+            Object primaryKeyValue = null;
+
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Column.class)) {
+                    Column columnAnnotation = field.getAnnotation(Column.class);
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+                    String columnName = columnAnnotation.libelle();
+
+                    if (columnAnnotation.primaryKey()) {
+                        // Si la colonne est la clé primaire, la stocker pour la clause WHERE
+                        primaryKeyColumn = columnName;
+                        primaryKeyValue = value;
+                    } else {
+                        // Sinon, l'ajouter à la liste des colonnes à mettre à jour
+                        columnValuePairs.add(columnName + "=" + escapeValue(value));
+                    }
+                }
+            }
+
+            // Ajouter les colonnes à mettre à jour dans la requête
+            queryBuilder.append(String.join(", ", columnValuePairs));
+
+            // Ajouter la clause WHERE avec la colonne de clé primaire
+            queryBuilder.append(" WHERE ").append(primaryKeyColumn).append("=").append(escapeValue(primaryKeyValue));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return queryBuilder.toString();
+    }
+    
+    public <T> int executeUpdateQuery(Connection connection, T updatedObject) {
+        String updateQuery = generateUpdateQuery(updatedObject);
+        boolean open = false;
+
+        try  {
+            if(connection==null) {
+                try {
+                    connection = new Connexion_projet().getconnection();
+                    open = true;
+                } catch (Exception e) {
+                }
+                
+            }
+            PreparedStatement preparedStatement = connection.prepareStatement(updateQuery);
+            int rowAffected = preparedStatement.executeUpdate();
+            connection.commit();
+            return rowAffected;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0; // Retourne 0 en cas d'erreur
+        }
+        finally{
+            if(open){
+                try {
+                    connection.close();
+                    
+                } catch (Exception e) {
+                }
+            }
+            
+        }
+    }
+    
+    
+    public <T> String generateDeleteQuery() {
+        Class<?> clazz = this.getClass();
+        StringBuilder queryBuilder = new StringBuilder();
+
+        try {
+            // Récupérer le nom de la table depuis l'annotation @Table
+            if (clazz.isAnnotationPresent(Table.class)) {
+                Table tableAnnotation = clazz.getAnnotation(Table.class);
+                queryBuilder.append("DELETE FROM ").append(tableAnnotation.libelle()).append(" WHERE ");
+            }
+
+            // Récupérer la colonne de clé primaire et sa valeur depuis les annotations @Column
+            String primaryKeyColumn = "";
+            Object primaryKeyValue = null;
+
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Column.class)) {
+                    Column columnAnnotation = field.getAnnotation(Column.class);
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+                    String columnName = columnAnnotation.libelle();
+
+                    if (columnAnnotation.primaryKey()) {
+                        primaryKeyColumn = columnName;
+                        primaryKeyValue = value;
+                        break; // On suppose qu'il n'y a qu'une seule clé primaire
+                    }
+                }
+            }
+
+            // Ajouter la clause WHERE avec la colonne de clé primaire
+            queryBuilder.append(primaryKeyColumn).append("=").append(escapeValue(primaryKeyValue));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return queryBuilder.toString();
+    }
+    
+    public <T> int executeDeleteQuery(Connection connection) {
+    String deleteQuery = generateDeleteQuery();
+    System.out.println("deleteQuery : "+deleteQuery);
+        boolean open = false;
+
+        try  {
+            if(connection==null) {
+                try {
+                    connection = new Connexion_projet().getconnection();
+                    open = true;
+                } catch (Exception e) {
+                }
+                
+            }
+            PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery);
+            int rowAffected = preparedStatement.executeUpdate();
+            connection.commit();
+            return rowAffected;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0; // Retourne 0 en cas d'erreur
+        }
+        finally{
+            if(open){
+                try {
+                    connection.close();
+                    
+                } catch (Exception e) {
+                }
+            }
+            
+        }
+    }
+    
+    public <T> String generateUpdateQuery(T updatedObject) {
+    Class<?> clazz = updatedObject.getClass();
+    StringBuilder queryBuilder = new StringBuilder();
+
+    try {
+        // Récupérer le nom de la table depuis l'annotation @Table
+        if (clazz.isAnnotationPresent(Table.class)) {
+            Table tableAnnotation = clazz.getAnnotation(Table.class);
+            queryBuilder.append("UPDATE ").append(tableAnnotation.libelle()).append(" SET ");
+        }
+
+        // Récupérer les colonnes et valeurs depuis les annotations @Column
+        List<String> columnValuePairs = new ArrayList<>();
+        String primaryKeyColumn = "";
+        Object primaryKeyValue = null;
+
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Column.class)) {
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                field.setAccessible(true);
+                Object value = field.get(updatedObject);
+                String columnName = columnAnnotation.libelle();
+
+                if (columnAnnotation.primaryKey()) {
+                    // Si la colonne est la clé primaire, la stocker pour la clause WHERE
+                    primaryKeyColumn = columnName;
+                    primaryKeyValue = value;
+                } else {
+                    // Sinon, l'ajouter à la liste des colonnes à mettre à jour
+                    columnValuePairs.add(columnName + "=" + escapeValue(value));
+                }
+            }
+        }
+
+        // Ajouter les colonnes à mettre à jour dans la requête
+        queryBuilder.append(String.join(", ", columnValuePairs));
+
+        // Ajouter la clause WHERE avec la colonne de clé primaire
+        queryBuilder.append(" WHERE ").append(primaryKeyColumn).append("=").append(escapeValue(primaryKeyValue));
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    return queryBuilder.toString();
+}
+
+
+    private String escapeValue(Object value) {
+        if (value == null) {
+            return "NULL";
+        } else if (value instanceof String || value instanceof Character) {
+            return "'" + value.toString() + "'";
+        } else {
+            return value.toString();
+        }
+    }
+
+    
+//    public void updateMain(Connection c){
+//        
+//        PreparedStatement statement = null;
+//        ResultSet resultSet = null;
+//
+//        try {
+//            if(c==null){
+//                Connexion_projet cc = new Connexion_projet();
+//                c = cc.getconnection();
+//            }
+//            String sql = "UPDATE "+this.getClass().getSimpleName()+" SET where idSecteur = ?";
+//            statement = c.prepareStatement(sql);
+//            statement.setString(1, secteurId);
+//            resultSet = statement.executeQuery();
+//
+//            while (resultSet.next()) {
+//                String id = resultSet.getString("idClasse");
+//                String nomClasse = resultSet.getString("nomClasse");
+//                Classe classe = new Classe(nomClasse, new ArrayList<>());
+//                classe.setId(id);
+//                classes.add(classe);
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        } finally {
+//            if (resultSet != null) resultSet.close();
+//                    if (statement != null) statement.close();
+//                    if (connection != null) connection.close();
+//        }
+//    }
     
     /** base utiliser par le table **/
     private String basetable(){
@@ -83,7 +333,9 @@ public class Generic2 implements Serializable{
         Field[] champs = this.getClass().getDeclaredFields();
         List<String> listeAnnotation = new ArrayList<>();
         for (Field field : champs) {
+            
             String value = getAnnotationColumn(field);
+//            System.out.println("getValueAnnotation : "+value);
             if (value != null) { listeAnnotation.add(value); }
         }
         return listeAnnotation;
@@ -207,7 +459,12 @@ public class Generic2 implements Serializable{
                 }
                 
             }else{
-                query = query +",?";
+//                System.out.println("field name : "+field.getName());
+                Method getter = this.getClass().getMethod("get"+utility.Utility.capitalword(field.getName()));
+//                System.out.println("getter : "+getter.getName());
+                Object value = getter.invoke(this);
+                if(field.getType() == String.class || field.getType() == Date.class || field.getType() == Timestamp.class) query = query +","+"'"+value+"'";
+                else query = query +","+value;
             }
             i++;
         }
@@ -243,18 +500,23 @@ public class Generic2 implements Serializable{
      * @throws java.sql.SQLException ***/
     public void  create(Connection connexion) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, SQLException, Exception{
         String query = this.requetinsertvalues();
+        System.out.println("create query : "+query);
         boolean open = false;
-        PreparedStatement statement = null;
+        Statement statement = null;
         try {
-            if(connexion == null){
-                connexion = getConnectionViaTable();
-                open = true;
-                connexion.setAutoCommit(false);
-            }
-            statement = connexion.prepareStatement(query);
-            setObject(statement, FieldAnnotationColumn(), 1);
-            int value = statement.executeUpdate();
-            if(open){ connexion.commit(); }
+//            if(connexion == null){
+//                connexion = getConnectionViaTable();
+//                open = true;
+//                connexion.setAutoCommit(false);
+//            }
+//            statement = connexion.prepareStatement(query);
+//            setObject(statement, FieldAnnotationColumn(), 1);
+            statement = connexion.createStatement();
+
+            int value = statement.executeUpdate(query);
+            System.out.println("row affected for create : "+value);
+            connexion.commit();
+//            if(open){ connexion.commit(); }
         } catch (Exception e) {
             if(connexion != null && open){
                  connexion.rollback();
@@ -274,14 +536,18 @@ public class Generic2 implements Serializable{
         int i = 0,j=0;
         for (Field field : listeColumn) {
             String value = getAnnotationColumn(field);
+            System.out.println("__value : "+value);
             if(field.getType().getSimpleName().equals("String")){
+                System.out.println("in update field begin");
                 m = this.getClass().getMethod("get" + utility.Utility.capitalword(value));
+                System.out.println("method : "+m.getName());
                 query = query + " and " + value + " LIKE '%"+m.invoke(this)+"%'";
+                System.out.println("in update field : "+query);
             }else{
                 query = query + " and " + value + " = ?";
             }
         }
-       
+        System.out.println("update query : "+query);
         return query;
     }
     
@@ -493,7 +759,9 @@ public class Generic2 implements Serializable{
      * @throws Exception
      */
     public void update(Connection connexion,Generic2 objupdate) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException, Exception{
+        System.out.println("begin");
         String query = this.AvecCondition(objupdate.requetupdate());
+        System.out.print(query);
         List<String> listeColumn = this.getValueAnnotation();
         List<String> listeColumnObjUpadte =  objupdate.methodFieldNotNullAnnotation(objupdate.getValueAnnotation());;
         boolean open = false;
@@ -507,7 +775,9 @@ public class Generic2 implements Serializable{
             statement = connexion.prepareStatement(query);
             setObject(statement, objupdate.methodFieldNotNull(listeColumnObjUpadte), this.methodFieldNotNull(listeColumn), objupdate);
             int value = statement.executeUpdate();
-            if(open) connexion.commit();
+            System.out.println("update row affected : "+value);
+            connexion.commit();
+//            if(open) connexion.commit();
         } catch (Exception e) {
             if(connexion != null) connexion.rollback();
             throw e;
@@ -525,9 +795,11 @@ public class Generic2 implements Serializable{
     
     public void delete(Connection connexion) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException, Exception{
         String query = requetedelete();
+        System.out.println(query);
         List<String> listeColumn = this.getValueAnnotation();
         boolean open = false;
         PreparedStatement statement = null;
+        System.out.println("delete before try");
         try {
             if(connexion == null){
                 connexion = getConnectionViaTable();
@@ -537,6 +809,7 @@ public class Generic2 implements Serializable{
             statement = connexion.prepareStatement(query);
             setObject(statement,this.methodFieldNotNull(listeColumn),0);
             int value = statement.executeUpdate();
+            System.out.println("delete value "+value);
             if(open)  connexion.commit();
         } catch (Exception e) {
             if(connexion != null) connexion.rollback();
@@ -548,6 +821,7 @@ public class Generic2 implements Serializable{
     }
     
     public List select(Connection connexion,String query) throws SQLException, Exception{
+//        System.out.println(query);
         PreparedStatement statement = null;
         boolean open = false;
         List<dao.Generic2> results = new ArrayList<>();
@@ -564,16 +838,37 @@ public class Generic2 implements Serializable{
             resultat = statement.executeQuery();
             List<Field> fields =  MethodSet(null);
             List<String> annotation = ColumnLabel(null);
-            int i = 0;
-            while(resultat.next()){
-                g = this.getClass().newInstance();
-                for (Field field : fields) {
-                    g.getClass().getMethod("set" + utility.Utility.capitalword(field.getName()), field.getType()).invoke(g, resultat.getObject(annotation.get(i)));
-                    i++;
-                }
-                results.add(g);
-                i=0;
+//            int i = 0;
+//            while(resultat.next()){
+//                g = this.getClass().newInstance();
+//                for (Field field : fields) {
+//                    g.getClass().getMethod("set" + utility.Utility.capitalword(field.getName()), field.getType()).invoke(g, resultat.getObject(annotation.get(i)));
+//                    i++;
+//                }
+//                results.add(g);
+//                i=0;
+//            }
+
+//            while (resultat.next()) {
+//            g = this.getClass().newInstance();
+//            for (int i = 0; i < fields.size(); i++) {
+////                g.getClass().getMethod("set" + utility.Utility.capitalword(fields.get(i).getName()), fields.get(i).getType()).invoke(g, resultat.getObject(annotation.get(i)));
+//                g.getClass().getMethod("set" + utility.Utility.capitalword(fields.get(i).getName()), fields.get(i).getType()).invoke(g, String.valueOf(resultat.getObject(annotation.get(i))));
+//
+//            }
+//            results.add(g);
+//        }
+        while (resultat.next()) {
+//            System.out.println(resultat.getS);
+            g = this.getClass().newInstance();
+            for (int i = 0; i < fields.size(); i++) {
+                Object value = resultat.getObject(annotation.get(i));
+                // Convertir la valeur au type attendu par la méthode set
+                Object convertedValue = convertValueToFieldType(value, fields.get(i).getType());
+                g.getClass().getMethod("set" + utility.Utility.capitalword(fields.get(i).getName()), fields.get(i).getType()).invoke(g, convertedValue);
             }
+            results.add(g);
+        }
             return results;
         } catch (Exception e) {
             if(connexion != null)  connexion.rollback();
@@ -585,6 +880,20 @@ public class Generic2 implements Serializable{
             if(statement!= null)  statement.close();
             if(resultat != null)  resultat.close();
         }
+    }
+    
+    // Méthode pour convertir la valeur au type attendu par la méthode set
+    private Object convertValueToFieldType(Object value, Class<?> fieldType) {
+        // Ajoutez ici la logique de conversion appropriée en fonction du type du champ
+        if (fieldType == Integer.class) {
+            return (value == null) ? null : Integer.valueOf(value.toString());
+        } else if (fieldType == String.class) {
+            return (value == null) ? null : value.toString();
+        }
+        // Ajoutez des conversions supplémentaires si nécessaire
+
+        // Si le type n'est pas géré, renvoyez simplement la valeur sans conversion
+        return value;
     }
     
     public Generic2 select_one(Connection connexion,String query) throws SQLException, Exception{
