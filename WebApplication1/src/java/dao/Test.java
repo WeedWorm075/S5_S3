@@ -25,17 +25,21 @@ public class Test extends Generic2 {
     @Column(libelle = "id",primaryKey = true)
     Integer id;
     @Column(libelle = "texte")
-    String nom;
+    String texte;
     @Column(libelle = "nom")
-    String prenom;
+    String nom;
 
     public Test() {
     }
 
-    public Test(Integer id, String nom, String prenom) {
+    public Test(Integer id, String nom, String texte) {
         this.id = id;
         this.nom = nom;
-        this.prenom = prenom;
+        this.texte = texte;
+    }
+
+    Test(int i) {
+        this.id = i;
     }
 
     public Integer getId() {
@@ -54,12 +58,12 @@ public class Test extends Generic2 {
         this.nom = nom;
     }
 
-    public String getPrenom() {
-        return prenom;
+    public String getTexte() {
+        return texte;
     }
 
-    public void setPrenom(String prenom) {
-        this.prenom = prenom;
+    public void setTexte(String texte) {
+        this.texte = texte;
     }
 
     

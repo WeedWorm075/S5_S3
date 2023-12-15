@@ -53,8 +53,8 @@ create table lieu_categorie(
 );
 
 -- 2st part
-alter table activite add column dateHDebut timestamp, dateHFin timestamp;
-alter table activite add column dateHFin timestamp, dateHFin timestamp;
+-- alter table activite add column dateHDebut timestamp, dateHFin timestamp;
+-- alter table activite add column dateHFin timestamp, dateHFin timestamp;
 
 -- ENTITE : VOYAGE
 create sequence sq_voyage increment by 1 minvalue 1 start 1;
